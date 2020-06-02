@@ -60,29 +60,29 @@ func (t *Typer) drawBackground() image.Image {
 	return dc.Image()
 }
 
-func (t *Typer) drawFrames(lines []string) ([]image.Image, error) {
-	frames := make([]image.Image, 0)
+func (t *Typer) drawFrames(lines []string, framesCount int) []image.Image {
+	frames := make([]image.Image, 0, framesCount)
 	frames = append(frames, t.drawBackground())
+
+	var typedLine strings.Builder
 	for i, line := range lines {
-		var typedLine strings.Builder
+		typedLine.Grow(len(line))
 		for _, symbol := range line {
 			typedLine.WriteRune(symbol)
 			frame := t.drawFrame(typedLine.String(), 0, float64(i+1)*32)
 			frames = append(frames, frame)
 		}
+		typedLine.Reset()
 	}
-	return frames, nil
+	return frames
 }
 
 func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
-	lines, err := t.divideTextOnLines(line)
+	lines, framesCount, err := t.divideTextOnLines(line)
 	if err != nil {
 		return nil, err
 	}
-	frames, err := t.drawFrames(lines)
-	if err != nil {
-		return nil, err
-	}
+	frames := t.drawFrames(lines, framesCount)
 	outGif := &gif.GIF{}
 	for _, frame := range frames {
 		bounds := frame.Bounds()
@@ -95,22 +95,25 @@ func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
 	return outGif, nil
 }
 
-func (t *Typer) divideTextOnLines(text string) ([]string, error) {
+func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
+	framesCount := 0
+
 	lines := make([]string, 0)
 	var line strings.Builder
 	line.Grow(t.maxLineSize)
 	for _, character := range text {
 		if _, err := line.WriteRune(character); err != nil {
-			return nil, err
+			return nil, framesCount, err
 		}
-		if line.Len() > t.maxLineSize {
+		if line.Len() >= t.maxLineSize {
 			lines = append(lines, line.String())
 			line.Reset()
 			line.Grow(t.maxLineSize)
 		}
+		framesCount++
 	}
 	if line.Len() > 0 {
 		lines = append(lines, line.String())
 	}
-	return lines, nil
+	return lines, framesCount, nil
 }
