@@ -8,7 +8,7 @@ Converts text to animated typing gifs
 ### Dependencies
 * Go 1.13+
 
-###Installation
+### Installation
 ```
 make install
 ```
