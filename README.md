@@ -1,4 +1,4 @@
-#GIFTyper
+# GIFTyper
 
 Converts text to animated typing gifs
 
