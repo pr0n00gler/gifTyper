@@ -1,4 +1,4 @@
-module gifTyper
+module github.com/programmer10110/gifTyper
 
 go 1.13
 
