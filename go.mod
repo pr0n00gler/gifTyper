@@ -1,6 +1,6 @@
 module github.com/programmer10110/gifTyper
 
-go 1.13
+go 1.14
 
 require (
 	github.com/fogleman/gg v1.3.0
