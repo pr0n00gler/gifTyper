@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gifTyper/typer"
+	"github.com/programmer10110/gifTyper/typer"
 	"image/gif"
 	"log"
 	"os"
