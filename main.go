@@ -15,20 +15,25 @@ func main() {
 
 	flag.Parse()
 
-	*text = "Hello world Hello world Hello world Can you kick my ass, Please. Push The Tempo? Hello world Hello world Hello world Hello world "
+	*text = "В сибири говорят:гусей надо есть до тех пор, пока первый не упрется в стул!"
 
 	if *text == "" {
 		fmt.Println("Usage: gifTyper -text=\"Hello World!\" -output=\"out.gif\"")
 		return
 	}
 
-	//generator, err := typer.InitGenerator(37, 5, 500, 250, "Roboto-Regular.ttf")
 	generator, err := typer.InitGenerator()
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	_ = generator.SetDelay(1)
-	_ = generator.SetFontSize(14)
+	err = generator.SetDelay(1)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	err = generator.SetFontSize(32)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 	textGif, err := generator.GenerateGIF(*text)
 	if err != nil {
 		log.Fatalln(err.Error())
