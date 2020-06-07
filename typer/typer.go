@@ -37,23 +37,6 @@ type Typer struct {
 	delay          int
 }
 
-/*func InitGenerator(maxLineSize, maxLinesCount, frameW, frameH int, fontFile string) (*Typer, error) {
-	var (
-		err error
-	)
-
-	generator := &Typer{
-		maxLinesCount: maxLinesCount,
-		maxLineSize:   maxLineSize,
-		frameW:        frameW,
-		frameH:        frameH,
-	}
-	if generator.font, err = gg.LoadFontFace("Roboto-Regular.ttf", 32); err != nil {
-		return nil, err
-	}
-	return generator, nil
-}*/
-
 func InitGenerator() (*Typer, error) {
 	var (
 		err error
@@ -204,6 +187,7 @@ func (t *Typer) drawFrames(lines []string, framesCount int) []image.Image {
 }
 
 func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
+	line = t.checkSpacesAfterPunctuationMarks(line)
 	t.maxLineSize = t.countMaxLineSize(line)
 	lines, framesCount, err := t.divideTextOnLines(line)
 	if err != nil {
@@ -222,7 +206,7 @@ func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
 	return outGif, nil
 }
 
-func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
+/*func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
 	framesCount := 0
 
 	lines := make([]string, 0)
@@ -243,4 +227,59 @@ func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
 		lines = append(lines, line.String())
 	}
 	return lines, framesCount, nil
+}*/
+
+func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
+	space := " "
+	framesCount := 0
+
+	words := strings.Split(text, space)
+	lines := make([]string, 0)
+
+	var line strings.Builder
+	line.Grow(t.maxLineSize)
+	for _, word := range words {
+		if (line.Len() + len(word)) < t.maxLineSize {
+			line.WriteString(word + space)
+		} else {
+			lines = append(lines, line.String())
+			framesCount += line.Len()
+			line.Reset()
+			line.Grow(t.maxLineSize)
+			line.WriteString(word + space)
+		}
+	}
+
+	if line.Len() != 0 {
+		framesCount += line.Len()
+		lines = append(lines, line.String())
+		line.Reset()
+	}
+
+	return lines, framesCount, nil
+}
+
+func (t *Typer) checkSpacesAfterPunctuationMarks(text string) string {
+	var space byte = ' '
+	punctuationMarks := []byte{',', '.', '!', '?', ':', ';', '-'}
+	for index, _ := range text {
+		if index == len(text)-1 {
+			continue
+		}
+		if t.contains(punctuationMarks, text[index]) &&
+			!t.contains(punctuationMarks, text[index+1]) &&
+			text[index+1] != space {
+			text = strings.ReplaceAll(text, string(text[index]), string(text[index])+string(space))
+		}
+	}
+	return text
+}
+
+func (t *Typer) contains(s []byte, e byte) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
