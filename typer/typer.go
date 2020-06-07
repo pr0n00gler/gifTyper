@@ -206,29 +206,6 @@ func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
 	return outGif, nil
 }
 
-/*func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
-	framesCount := 0
-
-	lines := make([]string, 0)
-	var line strings.Builder
-	line.Grow(t.maxLineSize)
-	for _, character := range text {
-		if _, err := line.WriteRune(character); err != nil {
-			return nil, framesCount, err
-		}
-		if line.Len() >= t.maxLineSize {
-			lines = append(lines, line.String())
-			line.Reset()
-			line.Grow(t.maxLineSize)
-		}
-		framesCount++
-	}
-	if line.Len() > 0 {
-		lines = append(lines, line.String())
-	}
-	return lines, framesCount, nil
-}*/
-
 func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
 	space := " "
 	framesCount := 0
