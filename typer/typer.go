@@ -1,6 +1,7 @@
 package typer
 
 import (
+	"bytes"
 	"errors"
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font"
@@ -244,20 +245,11 @@ func (t *Typer) checkSpacesAfterPunctuationMarks(text string) string {
 		if index == len(text)-1 {
 			continue
 		}
-		if t.contains(punctuationMarks, text[index]) &&
-			!t.contains(punctuationMarks, text[index+1]) &&
+		if bytes.ContainsAny(punctuationMarks, string(text[index])) &&
+			!bytes.ContainsAny(punctuationMarks, string(text[index+1])) &&
 			text[index+1] != space {
 			text = strings.ReplaceAll(text, string(text[index]), string(text[index])+string(space))
 		}
 	}
 	return text
-}
-
-func (t *Typer) contains(s []byte, e byte) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }
