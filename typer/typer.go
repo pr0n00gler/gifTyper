@@ -245,8 +245,8 @@ func (t *Typer) checkSpacesAfterPunctuationMarks(text string) string {
 		if index == len(text)-1 {
 			continue
 		}
-		if bytes.ContainsAny(punctuationMarks, string(text[index])) &&
-			!bytes.ContainsAny(punctuationMarks, string(text[index+1])) &&
+		if bytes.Contains(punctuationMarks, []byte{text[index]}) &&
+			!bytes.Contains(punctuationMarks, []byte{text[index]}) &&
 			text[index+1] != space {
 			text = strings.ReplaceAll(text, string(text[index]), string(text[index])+string(space))
 		}
