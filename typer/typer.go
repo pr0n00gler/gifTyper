@@ -146,8 +146,6 @@ func (t *Typer) countMaxLineSize(text string) int {
 		maxLineSize = currentSymbolsCount
 	}
 
-	println(maxLineSize)
-
 	return maxLineSize
 }
 
