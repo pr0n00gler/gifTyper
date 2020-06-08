@@ -20,7 +20,15 @@ func main() {
 		return
 	}
 
-	generator, err := typer.InitGenerator(37, 5, 500, 250, "Roboto-Regular.ttf")
+	generator, err := typer.InitGenerator()
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	err = generator.SetDelay(1)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	err = generator.SetFontSize(32)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}

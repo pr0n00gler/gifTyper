@@ -1,6 +1,8 @@
 package typer
 
 import (
+	"bytes"
+	"errors"
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font"
 	"image"
@@ -18,28 +20,137 @@ var palette = color.Palette{
 	color.RGBA{G: 100, A: 255},
 }
 
+const defaultFontSize = 32
+const defaultFontFile = "Roboto-Regular.ttf"
+const defaultFrameWidth = 500
+const defaultFrameHeight = 500
+const defaultMaxLineSize = 20
+const defaultMaxLineCount = 5
+const defaultDelay = 30
+
 type Typer struct {
 	maxLineSize    int
 	maxLinesCount  int
 	frameW, frameH int
 	font           font.Face
+	fontPath       string
+	fontSize       int
+	delay          int
 }
 
-func InitGenerator(maxLineSize, maxLinesCount, frameW, frameH int, fontFile string) (*Typer, error) {
+func InitGenerator() (*Typer, error) {
 	var (
 		err error
 	)
 
 	generator := &Typer{
-		maxLinesCount: maxLinesCount,
-		maxLineSize:   maxLineSize,
-		frameW:        frameW,
-		frameH:        frameH,
+		maxLinesCount: defaultMaxLineCount,
+		maxLineSize:   defaultMaxLineSize,
+		frameW:        defaultFrameWidth,
+		frameH:        defaultFrameHeight,
+		delay:         defaultDelay,
+		fontPath:      defaultFontFile,
 	}
-	if generator.font, err = gg.LoadFontFace(fontFile, 32); err != nil {
+	if generator.font, err = gg.LoadFontFace(defaultFontFile, defaultFontSize); err != nil {
 		return nil, err
 	}
 	return generator, nil
+}
+
+func (t *Typer) SetFontSize(fontSize int) error {
+	err := t.SetFont(t.fontPath, fontSize)
+	if err != nil {
+		return err
+	}
+	t.fontSize = fontSize
+	return nil
+}
+
+func (t *Typer) SetFont(fontFilePath string, fontSize int) error {
+	var err error
+	t.font, err = gg.LoadFontFace(fontFilePath, float64(fontSize))
+	if err != nil {
+		return err
+	}
+	t.fontSize = fontSize
+	t.fontPath = fontFilePath
+	return nil
+}
+
+func (t *Typer) SetDelay(delay int) error {
+	if delay < 1 {
+		return errors.New("Incorrect delay")
+	}
+	t.delay = delay
+	return nil
+}
+
+func (t *Typer) SetMaxLinesCount(maxLinesCount int) error {
+	if maxLinesCount < 1 {
+		return errors.New("Incorrect lines count")
+	}
+	t.maxLinesCount = maxLinesCount
+	return nil
+}
+
+func (t *Typer) setFrameWidth(width int) error {
+	if width < 1 {
+		return errors.New("Incorrect lines count")
+	}
+	t.frameW = width
+	return nil
+}
+
+func (t *Typer) setFrameHeight(height int) error {
+	if height < 1 {
+		return errors.New("Incorrect lines count")
+	}
+	t.frameH = height
+	return nil
+}
+
+func (t *Typer) countSpaceWidth() int {
+	rect, _ := font.BoundString(t.font, "W")
+	rectSizeWithoutSpace := rect.Max.X.Round()
+	rect, _ = font.BoundString(t.font, " W")
+	rectSizeWithSpace := rect.Max.X.Round()
+
+	spaceLength := rectSizeWithSpace - rectSizeWithoutSpace
+	println(spaceLength)
+	return spaceLength
+}
+
+func (t *Typer) countStringWidth(s string) int {
+	rect, _ := font.BoundString(t.font, s)
+	width := rect.Max.X.Round()
+	return width
+}
+
+func (t *Typer) countMaxLineSize(text string) int {
+	var maxLineSize = 0
+	widthLimit := t.frameW
+	spaceLength := 1
+	spaceWidth := t.countSpaceWidth()
+	var currentSymbolsCount = 0
+	var currentSymbolsWidth = 0
+	words := strings.Split(text, " ")
+	for _, word := range words {
+		wordWidth := t.countStringWidth(word)
+		if currentSymbolsWidth+wordWidth < widthLimit {
+			currentSymbolsWidth += wordWidth + spaceWidth
+			currentSymbolsCount += len(word) + spaceLength
+		} else {
+			maxLineSize = currentSymbolsCount
+			currentSymbolsWidth = wordWidth + spaceWidth
+			currentSymbolsCount = len(word) + spaceLength
+		}
+	}
+
+	if maxLineSize == 0 {
+		maxLineSize = currentSymbolsCount
+	}
+
+	return maxLineSize
 }
 
 func (t *Typer) drawFrame(line string, x, y float64) image.Image {
@@ -78,6 +189,8 @@ func (t *Typer) drawFrames(lines []string, framesCount int) []image.Image {
 }
 
 func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
+	line = t.checkSpacesAfterPunctuationMarks(line)
+	t.maxLineSize = t.countMaxLineSize(line)
 	lines, framesCount, err := t.divideTextOnLines(line)
 	if err != nil {
 		return nil, err
@@ -90,30 +203,53 @@ func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
 		draw.Draw(palettedImage, palettedImage.Rect, frame, bounds.Min, draw.Src)
 
 		outGif.Image = append(outGif.Image, palettedImage)
-		outGif.Delay = append(outGif.Delay, 30)
+		outGif.Delay = append(outGif.Delay, t.delay)
 	}
 	return outGif, nil
 }
 
 func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
+	space := " "
 	framesCount := 0
 
+	words := strings.Split(text, space)
 	lines := make([]string, 0)
+
 	var line strings.Builder
 	line.Grow(t.maxLineSize)
-	for _, character := range text {
-		if _, err := line.WriteRune(character); err != nil {
-			return nil, framesCount, err
-		}
-		if line.Len() >= t.maxLineSize {
+	for _, word := range words {
+		if (line.Len() + len(word)) < t.maxLineSize {
+			line.WriteString(word + space)
+		} else {
 			lines = append(lines, line.String())
+			framesCount += line.Len()
 			line.Reset()
 			line.Grow(t.maxLineSize)
+			line.WriteString(word + space)
 		}
-		framesCount++
 	}
-	if line.Len() > 0 {
+
+	if line.Len() != 0 {
+		framesCount += line.Len()
 		lines = append(lines, line.String())
+		line.Reset()
 	}
+
 	return lines, framesCount, nil
+}
+
+func (t *Typer) checkSpacesAfterPunctuationMarks(text string) string {
+	var space byte = ' '
+	punctuationMarks := []byte{',', '.', '!', '?', ':', ';', '-'}
+	for index, _ := range text {
+		if index == len(text)-1 {
+			continue
+		}
+		if bytes.Contains(punctuationMarks, []byte{text[index]}) &&
+			!bytes.Contains(punctuationMarks, []byte{text[index]}) &&
+			text[index+1] != space {
+			text = strings.ReplaceAll(text, string(text[index]), string(text[index])+string(space))
+		}
+	}
+	return text
 }
