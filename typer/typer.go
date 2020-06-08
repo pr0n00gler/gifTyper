@@ -61,15 +61,18 @@ func (t *Typer) SetFontSize(fontSize int) error {
 	if err != nil {
 		return err
 	}
+	t.fontSize = fontSize
 	return nil
 }
 
-func (t *Typer) SetFont(fontFile string, fontSize int) error {
+func (t *Typer) SetFont(fontFilePath string, fontSize int) error {
 	var err error
-	t.font, err = gg.LoadFontFace(fontFile, float64(fontSize))
+	t.font, err = gg.LoadFontFace(fontFilePath, float64(fontSize))
 	if err != nil {
 		return err
 	}
+	t.fontSize = fontSize
+	t.fontPath = fontFilePath
 	return nil
 }
 
