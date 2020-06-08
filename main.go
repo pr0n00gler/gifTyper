@@ -15,8 +15,6 @@ func main() {
 
 	flag.Parse()
 
-	*text = "В сибири говорят:гусей надо есть до тех пор, пока первый не упрется в стул!"
-
 	if *text == "" {
 		fmt.Println("Usage: gifTyper -text=\"Hello World!\" -output=\"out.gif\"")
 		return
