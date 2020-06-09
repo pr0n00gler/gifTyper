@@ -23,7 +23,7 @@ var palette = color.Palette{
 const defaultFontSize = 32
 const defaultFontFile = "Roboto-Regular.ttf"
 const defaultFrameWidth = 500
-const defaultFrameHeight = 500
+const defaultFrameHeight = 68
 const defaultMaxLineSize = 20
 const defaultMaxLineCount = 5
 const defaultDelay = 30
@@ -50,6 +50,7 @@ func InitGenerator() (*Typer, error) {
 		frameH:        defaultFrameHeight,
 		delay:         defaultDelay,
 		fontPath:      defaultFontFile,
+		fontSize:      defaultFontSize,
 	}
 	if generator.font, err = gg.LoadFontFace(defaultFontFile, defaultFontSize); err != nil {
 		return nil, err
@@ -93,6 +94,12 @@ func (t *Typer) SetMaxLinesCount(maxLinesCount int) error {
 	return nil
 }
 
+func (t *Typer) countMaxLines() int {
+	maxLines := t.frameH / t.fontSize
+	println(maxLines)
+	return maxLines
+}
+
 func (t *Typer) setFrameWidth(width int) error {
 	if width < 1 {
 		return errors.New("Incorrect lines count")
@@ -116,7 +123,6 @@ func (t *Typer) countSpaceWidth() int {
 	rectSizeWithSpace := rect.Max.X.Round()
 
 	spaceLength := rectSizeWithSpace - rectSizeWithoutSpace
-	println(spaceLength)
 	return spaceLength
 }
 
@@ -172,17 +178,24 @@ func (t *Typer) drawBackground() image.Image {
 }
 
 func (t *Typer) drawFrames(lines []string, framesCount int) []image.Image {
+	maxLines := t.countMaxLines()
 	frames := make([]image.Image, 0, framesCount)
 	frames = append(frames, t.drawBackground())
 
+	var shifter = 0
 	var typedLine strings.Builder
-	for i, line := range lines {
+	for _, line := range lines {
 		typedLine.Grow(len(line))
+		if shifter > maxLines-1 {
+			frames = append(frames, t.drawBackground())
+			shifter = 0
+		}
 		for _, symbol := range line {
 			typedLine.WriteRune(symbol)
-			frame := t.drawFrame(typedLine.String(), 0, float64(i+1)*32)
+			frame := t.drawFrame(typedLine.String(), 0, float64(shifter+1)*32)
 			frames = append(frames, frame)
 		}
+		shifter++
 		typedLine.Reset()
 	}
 	return frames
