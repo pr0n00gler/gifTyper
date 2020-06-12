@@ -192,7 +192,7 @@ func (t *Typer) drawFrames(lines []string, framesCount int) []image.Image {
 		}
 		for _, symbol := range line {
 			typedLine.WriteRune(symbol)
-			frame := t.drawFrame(typedLine.String(), 0, float64(shifter+1)*32)
+			frame := t.drawFrame(typedLine.String(), 0, float64(shifter+1)*float64(t.fontSize))
 			frames = append(frames, frame)
 		}
 		shifter++
