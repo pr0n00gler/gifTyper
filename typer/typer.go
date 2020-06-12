@@ -87,14 +87,6 @@ func (t *Typer) SetDelay(delay int) error {
 	return nil
 }
 
-func (t *Typer) SetMaxLinesCount(maxLinesCount int) error {
-	if maxLinesCount < 1 {
-		return errors.New("Incorrect lines count")
-	}
-	t.maxLinesCount = maxLinesCount
-	return nil
-}
-
 func (t *Typer) countMaxLines() int {
 	maxLines := t.frameH / t.fontSize
 	return maxLines
