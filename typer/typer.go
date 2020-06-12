@@ -27,6 +27,7 @@ const defaultFrameHeight = 500
 const defaultMaxLineSize = 20
 const defaultMaxLineCount = 5
 const defaultDelay = 30
+const requiredBottomMargin = 8
 
 type Typer struct {
 	maxLineSize    int
@@ -99,20 +100,13 @@ func (t *Typer) countMaxLines() int {
 	return maxLines
 }
 
-func (t *Typer) setFrameWidth(width int) error {
-	if width < 1 {
-		return errors.New("Incorrect lines count")
+func (t *Typer) countFrameHeight(linesCount int) {
+	textHeight := linesCount * t.fontSize
+	if textHeight < defaultFrameHeight {
+		t.frameH = textHeight + requiredBottomMargin
+	} else {
+		t.frameH = defaultFrameHeight
 	}
-	t.frameW = width
-	return nil
-}
-
-func (t *Typer) setFrameHeight(height int) error {
-	if height < 1 {
-		return errors.New("Incorrect lines count")
-	}
-	t.frameH = height
-	return nil
 }
 
 func (t *Typer) countSpaceWidth() int {
@@ -207,6 +201,7 @@ func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
 	if err != nil {
 		return nil, err
 	}
+	t.countFrameHeight(len(lines))
 	frames := t.drawFrames(lines, framesCount)
 	outGif := &gif.GIF{}
 	for _, frame := range frames {
