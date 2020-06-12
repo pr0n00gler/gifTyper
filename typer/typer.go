@@ -96,7 +96,6 @@ func (t *Typer) SetMaxLinesCount(maxLinesCount int) error {
 
 func (t *Typer) countMaxLines() int {
 	maxLines := t.frameH / t.fontSize
-	println(maxLines)
 	return maxLines
 }
 
