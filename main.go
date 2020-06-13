@@ -24,6 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+	generator.SetMargins(8, 8, 8, 8)
 	err = generator.SetDelay(1)
 	if err != nil {
 		log.Fatalln(err.Error())

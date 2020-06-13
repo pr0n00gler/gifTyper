@@ -28,6 +28,7 @@ const defaultMaxLineSize = 20
 const defaultMaxLineCount = 5
 const defaultDelay = 30
 const requiredBottomMargin = 8
+const defaultMargin = 0
 
 type Typer struct {
 	maxLineSize    int
@@ -37,6 +38,10 @@ type Typer struct {
 	fontPath       string
 	fontSize       int
 	delay          int
+	topMargin      int
+	bottomMargin   int
+	leftMargin     int
+	rightMargin    int
 }
 
 func InitGenerator() (*Typer, error) {
@@ -52,11 +57,34 @@ func InitGenerator() (*Typer, error) {
 		delay:         defaultDelay,
 		fontPath:      defaultFontFile,
 		fontSize:      defaultFontSize,
+		topMargin:     defaultMargin,
+		bottomMargin:  defaultMargin,
+		leftMargin:    defaultMargin,
+		rightMargin:   defaultMargin,
 	}
 	if generator.font, err = gg.LoadFontFace(defaultFontFile, defaultFontSize); err != nil {
 		return nil, err
 	}
 	return generator, nil
+}
+
+func (t *Typer) SetMargins(top int, bottom int, left int, right int) {
+	if top < 0 {
+		top = 0
+	}
+	if bottom < 0 {
+		bottom = 0
+	}
+	if left < 0 {
+		left = 0
+	}
+	if right < 0 {
+		right = 0
+	}
+	t.topMargin = top
+	t.bottomMargin = bottom
+	t.leftMargin = left
+	t.rightMargin = right
 }
 
 func (t *Typer) SetFontSize(fontSize int) error {
@@ -88,16 +116,16 @@ func (t *Typer) SetDelay(delay int) error {
 }
 
 func (t *Typer) countMaxLines() int {
-	maxLines := t.frameH / t.fontSize
+	maxLines := (t.frameH - requiredBottomMargin - t.topMargin - t.bottomMargin) / t.fontSize
 	return maxLines
 }
 
 func (t *Typer) countFrameHeight(linesCount int) {
 	textHeight := linesCount * t.fontSize
 	if textHeight < defaultFrameHeight {
-		t.frameH = textHeight + requiredBottomMargin
+		t.frameH = textHeight + requiredBottomMargin + t.topMargin + t.bottomMargin
 	} else {
-		t.frameH = defaultFrameHeight
+		t.frameH = defaultFrameHeight + t.topMargin + t.bottomMargin
 	}
 }
 
@@ -119,7 +147,7 @@ func (t *Typer) countStringWidth(s string) int {
 
 func (t *Typer) countMaxLineSize(text string) int {
 	var maxLineSize = 0
-	widthLimit := t.frameW
+	widthLimit := t.frameW - t.leftMargin - t.rightMargin
 	spaceLength := 1
 	spaceWidth := t.countSpaceWidth()
 	var currentSymbolsCount = 0
@@ -127,11 +155,13 @@ func (t *Typer) countMaxLineSize(text string) int {
 	words := strings.Split(text, " ")
 	for _, word := range words {
 		wordWidth := t.countStringWidth(word)
-		if currentSymbolsWidth+wordWidth < widthLimit {
+		if currentSymbolsWidth+wordWidth+spaceWidth < widthLimit {
 			currentSymbolsWidth += wordWidth + spaceWidth
 			currentSymbolsCount += len(word) + spaceLength
 		} else {
-			maxLineSize = currentSymbolsCount
+			if currentSymbolsCount > maxLineSize {
+				maxLineSize = currentSymbolsCount
+			}
 			currentSymbolsWidth = wordWidth + spaceWidth
 			currentSymbolsCount = len(word) + spaceLength
 		}
@@ -177,7 +207,8 @@ func (t *Typer) drawFrames(lines []string, framesCount int) []image.Image {
 		}
 		for _, symbol := range line {
 			typedLine.WriteRune(symbol)
-			frame := t.drawFrame(typedLine.String(), 0, float64(shifter+1)*float64(t.fontSize))
+			frame := t.drawFrame(typedLine.String(), float64(t.leftMargin),
+				float64(shifter+1)*float64(t.fontSize)+float64(t.topMargin))
 			frames = append(frames, frame)
 		}
 		shifter++
