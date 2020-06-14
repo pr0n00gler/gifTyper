@@ -24,14 +24,12 @@ const defaultFontSize = 32
 const defaultFontFile = "Roboto-Regular.ttf"
 const defaultFrameWidth = 500
 const defaultFrameHeight = 500
-const defaultMaxLineSize = 20
 const defaultMaxLineCount = 5
 const defaultDelay = 30
 const requiredBottomMargin = 8
 const defaultMargin = 0
 
 type Typer struct {
-	maxLineSize    int
 	maxLinesCount  int
 	frameW, frameH int
 	font           font.Face
@@ -51,7 +49,6 @@ func InitGenerator() (*Typer, error) {
 
 	generator := &Typer{
 		maxLinesCount: defaultMaxLineCount,
-		maxLineSize:   defaultMaxLineSize,
 		frameW:        defaultFrameWidth,
 		frameH:        defaultFrameHeight,
 		delay:         defaultDelay,
@@ -145,35 +142,6 @@ func (t *Typer) countStringWidth(s string) int {
 	return width
 }
 
-func (t *Typer) countMaxLineSize(text string) int {
-	var maxLineSize = 0
-	widthLimit := t.frameW - t.leftMargin - t.rightMargin
-	spaceLength := 1
-	spaceWidth := t.countSpaceWidth()
-	var currentSymbolsCount = 0
-	var currentSymbolsWidth = 0
-	words := strings.Split(text, " ")
-	for _, word := range words {
-		wordWidth := t.countStringWidth(word)
-		if currentSymbolsWidth+wordWidth+spaceWidth < widthLimit {
-			currentSymbolsWidth += wordWidth + spaceWidth
-			currentSymbolsCount += len(word) + spaceLength
-		} else {
-			if currentSymbolsCount > maxLineSize {
-				maxLineSize = currentSymbolsCount
-			}
-			currentSymbolsWidth = wordWidth + spaceWidth
-			currentSymbolsCount = len(word) + spaceLength
-		}
-	}
-
-	if maxLineSize == 0 {
-		maxLineSize = currentSymbolsCount
-	}
-
-	return maxLineSize
-}
-
 func (t *Typer) drawFrame(line string, x, y float64) image.Image {
 	dc := gg.NewContext(t.frameW, t.frameH)
 	dc.SetRGBA(1, 1, 1, 0)
@@ -219,7 +187,6 @@ func (t *Typer) drawFrames(lines []string, framesCount int) []image.Image {
 
 func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
 	line = t.checkSpacesAfterPunctuationMarks(line)
-	t.maxLineSize = t.countMaxLineSize(line)
 	lines, framesCount, err := t.divideTextOnLines(line)
 	if err != nil {
 		return nil, err
@@ -241,20 +208,20 @@ func (t *Typer) GenerateGIF(line string) (*gif.GIF, error) {
 func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
 	space := " "
 	framesCount := 0
-
+	widthLimit := t.frameW - t.leftMargin - t.rightMargin
 	words := strings.Split(text, space)
 	lines := make([]string, 0)
 
 	var line strings.Builder
-	line.Grow(t.maxLineSize)
 	for _, word := range words {
-		if (line.Len() + len(word)) < t.maxLineSize {
-			line.WriteString(word + space)
-		} else {
+		currentLine := line.String() + word + space
+		currentLineWidth := t.countStringWidth(currentLine)
+		if currentLineWidth > widthLimit {
 			lines = append(lines, line.String())
 			framesCount += line.Len()
 			line.Reset()
-			line.Grow(t.maxLineSize)
+			line.WriteString(word + space)
+		} else {
 			line.WriteString(word + space)
 		}
 	}
