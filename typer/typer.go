@@ -231,6 +231,12 @@ func (t *Typer) divideTextOnLines(text string) ([]string, int, error) {
 		lines = append(lines, line.String())
 		line.Reset()
 	}
+	if len(lines) != 0 {
+		lenBefore := len(lines[len(lines)-1])
+		lines[len(lines)-1] = strings.Trim(lines[len(lines)-1], " ")
+		lenAfter := len(lines[len(lines)-1])
+		framesCount -= lenBefore - lenAfter
+	}
 
 	return lines, framesCount, nil
 }
