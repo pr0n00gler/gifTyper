@@ -17,3 +17,7 @@ make install
 ```shell
 gifTyper -text="Hello World!" -output="out.gif"
 ```
+
+## Authors
+* [Mikhail Mozhaev](https://github.com/programmer10110) - core code
+* [Vlad Sapozhnikov](https://github.com/uncolorr) - improvements
